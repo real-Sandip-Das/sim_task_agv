@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 
-<launch>
+<!-- This file is for SLAM, excludes saving the map to disk -->
 
-<!-- <include file="$(find tortoisebotpromax_gazebo)/launch/tortoisebotpromax_playground.launch" /> -->
+<launch>
 
     <!-- rosparam set /use_sim_time true -->
     <param name="/use_sim_time" value="true" />
