@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>waypoints_server</name>
+  <version>0.1.0</version>
+  <description>A few custom nodes for saving and loading waypoints to and from disk plus sending them to the Navigation Stack(move_base)</description>
+
+  <maintainer email="sd13535@outlook.com">Sandip Das</maintainer>
+  <license>BSD</license>
+  <author email="sd13535@outlook.com">Sandip Das</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>yaml-cpp</depend>
+
+  <export>
+
+  </export>
+</package>
