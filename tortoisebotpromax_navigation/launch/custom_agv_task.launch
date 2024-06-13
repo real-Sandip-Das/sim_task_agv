@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <!-- Advanced Monte Carlo Localization(publishes odom to map transform required for Navigation) -->
+    <include file="$(find tortoisebotpromax_navigation)/launch/amcl.launch">
+        <arg name="scan_topic"     value="scan"/>
+        <arg name="base_frame"     value="base_link"/>
+        <arg name="initial_pose_x" value="0.0"/>
+        <arg name="initial_pose_y" value="0.0"/>
+        <arg name="initial_pose_a" value="0.0"/>
+    </include>
+
+    <!-- tortoisebotpromax_sim_navigation.launch -->
+    <include file="$(find tortoisebotpromax_navigation)/launch/tortoisebotpromax_sim_navigation.launch">
+        <arg name="map_file" value="custom_agv_task"/>
+        <arg name="move_forward_only" value="false"/>
+        <arg name="exploration" value="false"/>
+    </include>
+
+</launch>
