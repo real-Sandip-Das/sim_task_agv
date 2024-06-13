@@ -4,7 +4,7 @@
 
 	<!-- roslaunch tortoisebotpromax_slam map_saver.launch map_name:=yourmapname -->
 
-	<arg name="map_name" default="mymap"/>
+	<arg name="map_name" default="custom_agv_task"/>
 
 	<node pkg="map_server" type="map_saver" name="map_saver" args="-f $(find tortoisebotpromax_navigation)/maps/$(arg map_name)"/>
 

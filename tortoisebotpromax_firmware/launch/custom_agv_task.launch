@@ -17,28 +17,10 @@
 	<!-- Map Publishing Node -->
     <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros" type="cartographer_occupancy_grid_node" args="-resolution 0.01" />
 	
-	<!-- Publish Odometry on /odom topic (only required for the real robot) -->
-	<!-- <node name="odom_publisher" pkg="tortoisebotpromax_firmware" type="odom_pub.py" output="screen"/>  -->
+	<!-- Publish Odometry on /odom topic (required for Localization) -->
+	<node name="odom_publisher" pkg="tortoisebotpromax_firmware" type="odom_pub.py" output="screen"/> 
 
     <node pkg="image_proc" type="image_proc" name="image_proc" ns="/camera/color" />
-
-    <!-- <node pkg="aruco_ros" type="marker_publisher" name="aruco_marker_publisher">
-        <remap from="/camera_info" to="/camera/color/camera_info" />
-        <remap from="/image" to="/camera/color/image_rect" />
-        <param name="marker_size"        value="0.05"/>
-        <param name="reference_frame"    value="base_link"/>
-        <param name="image_is_rectified" value="true"/>
-        <param name="camera_frame"       value="camera_color_optical_frame"/>
-        <param name="dictionary_id" value="0"/>
-    </node> -->
-
-    <!-- <node pkg="aruco_detect" type="aruco_detect" name="aruco_detect">
-        <remap from="/camera_info" to="/cv_camera/camera_info" />
-        <remap from="/camera/compressed" to="/cv_camera/image_raw" />
-        <param name="dictionary" value="0" />
-        <param name="publish_images" value="true" />
-        <param name="fiducial_len" value="0.2" />
-    </node> -->
 
     <!-- Run the nodelet manager -->
     <node pkg="nodelet" type="nodelet" name="aruco_tracker_nodelet_manager" args="manager" output="screen"/>
@@ -49,6 +31,9 @@
         <param name="marker_size" value="0.4"/>
         <param name="image_is_rectified" value="true"/>
     </node>
+
+    <!-- Convert pose estimations of ArUco markers to Landmarks for Google Cartographer -->
+    <include file="$(find aruco_opencv_to_cartographer_landmark)/launch/demo.launch"/>
 
     <!-- Rviz -->
     <node name="rviz" pkg="rviz" type="rviz" args="--display-config $(find tortoisebotpromax_firmware)/rviz/config.rviz" />
