@@ -7,9 +7,14 @@ add_definitions(-Wall -Werror)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+  roslint
   roscpp
   geometry_msgs
   visualization_msgs
+  cartographer_ros_msgs
+  tf2
+  tf2_geometry_msgs
+  tf2_ros
 )
 find_package(yaml-cpp REQUIRED)
 
@@ -22,7 +27,12 @@ catkin_package(
     ${YAML_CPP_INCLUDE_DIRS}
   CATKIN_DEPENDS
     roscpp
-    sensor_msgs
+    geometry_msgs
+    visualization_msgs
+    cartographer_ros_msgs
+    tf2
+    tf2_geometry_msgs
+    tf2_ros
 )
 
 ###########
@@ -88,7 +98,7 @@ install(
 install(
   DIRECTORY include/${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
+  FILES_MATCHING PATTERN "*.h"
 )
 
 ##########################

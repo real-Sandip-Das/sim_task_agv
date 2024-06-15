@@ -12,9 +12,15 @@
   <depend>roscpp</depend>
   <depend>geometry_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>cartographer_ros_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  
   <depend>yaml-cpp</depend>
 
   <export>
 
   </export>
+  <build_depend>roslint</build_depend>
 </package>
