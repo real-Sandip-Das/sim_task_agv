@@ -17,4 +17,6 @@
         <arg name="exploration" value="false"/>
     </include>
 
+    <!-- providing waypoints as goals -->
+    <include file="$(find waypoints_server)/launch/loader.launch" />
 </launch>
