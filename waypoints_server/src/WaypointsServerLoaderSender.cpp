@@ -13,6 +13,7 @@
 
 // STD
 #include <fstream>
+#include <memory>
 
 // ROS
 #include <actionlib/client/simple_action_client.h>
@@ -33,7 +34,8 @@ WaypointsServerLoaderSender::WaypointsServerLoaderSender(ros::NodeHandle& nodeHa
     ROS_ERROR_STREAM("Could not read waypoints from disk");
     ros::requestShutdown();
   }
-  actionClient_p_ = std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>(moveBaseAction_, true);
+  actionClient_p_ =
+    std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>(moveBaseAction_, true);
   ROS_INFO("Waiting for Action Server");
   actionClient_p_ -> waitForServer();
   ROS_INFO("Successfully launched node.");
