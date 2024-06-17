@@ -66,6 +66,7 @@ private:
 
   ros::Subscriber landmarkSubscriber_;
   std::string landmarkTopic_;
+  int landmarkQueueSize_;
 
   std::string trajectoryQueryService_;
   std::string getTrajectoryStatesService_;

@@ -1,14 +1,16 @@
 <?xml version="1.0" ?>
 <launch>
-    <arg name="waypoints_file" default="$(find waypoints_server)/saved_waypoints/example.yaml" />
+    <arg name="waypoints_file" default="$(find waypoints_server)/saved_waypoints/saved_example.dat" />
     <arg name="landmark_topic" default="/landmark_poses_list" />
+    <arg name="landmark_queue_size" default="1" />
     <arg name="trajectory_query_service" default="/trajectory_query" />
     <arg name="get_trajectory_states" default="/get_trajectory_states" />
     <arg name="map_frame" default="map" />
 
-    <node pkg="waypoints_server" name="waypoints_server_saver" type="waypoints_server_saver">
+    <node pkg="waypoints_server" name="waypoints_server_saver" type="waypoints_server_saver" output="screen">
         <param name="waypoints_file" value="$(arg waypoints_file)" />
         <param name="landmark_topic" value="$(arg landmark_topic)" />
+        <param name="landmark_queue_size" value="$(arg landmark_queue_size)" />
         <param name="trajectory_query_service" value="$(arg trajectory_query_service)" />
         <param name="get_trajectory_states" value="$(arg get_trajectory_states)" />
         <param name="map_frame" value="$(arg map_frame)" />

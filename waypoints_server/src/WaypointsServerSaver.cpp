@@ -25,8 +25,6 @@
 #include <cartographer_ros_msgs/GetTrajectoryStates.h>
 #include <move_base_msgs/MoveBaseGoal.h>
 
-// yaml-cpp
-#include <yaml-cpp/yaml.h>
 
 template<>
 inline geometry_msgs::PoseStamped tf2::toMsg(const visualization_msgs::Marker& a)
@@ -48,7 +46,7 @@ WaypointsServerSaver::WaypointsServerSaver(ros::NodeHandle& nodeHandle)
     ROS_ERROR("Could not read parameters.");
     ros::requestShutdown();
   }
-  landmarkSubscriber_ = nodeHandle_.subscribe(landmarkTopic_, 1,
+  landmarkSubscriber_ = nodeHandle_.subscribe(landmarkTopic_, landmarkQueueSize_,
                                       &WaypointsServerSaver::landmarkTopicCallback, this);
   ROS_INFO("Successfully launched node.");
 }
@@ -61,6 +59,7 @@ bool WaypointsServerSaver::readParameters()
 {
   if (!nodeHandle_.getParam("waypoints_file", waypointsFilePath_)) return false;
   if (!nodeHandle_.getParam("landmark_topic", landmarkTopic_)) return false;
+  if (!nodeHandle_.getParam("landmark_queue_size", landmarkQueueSize_)) return false;
   if (!nodeHandle_.getParam("trajectory_query_service", trajectoryQueryService_)) return false;
   if (!nodeHandle_.getParam("get_trajectory_states", getTrajectoryStatesService_)) return false;
   if (!nodeHandle_.getParam("map_frame", mapFrame)) return false;
@@ -147,37 +146,34 @@ void WaypointsServerSaver::landmarkTopicCallback(const visualization_msgs::Marke
     }
   }
 
-  // Saving to disk
-  std::vector<move_base_msgs::MoveBaseGoal> goals;
-  for (auto goalPoseStamped : trajectoryPointClosest)
+  // Creating a vector containing the closest waypoints sorted by their timestamp
+  std::vector<move_base_msgs::MoveBaseGoal> waypoints;
+  for (auto waypointPoseStamped : trajectoryPointClosest)
   {
-    move_base_msgs::MoveBaseGoal goal;
-    goal.target_pose = goalPoseStamped;
-    goals.push_back(goal);
+    move_base_msgs::MoveBaseGoal waypoint;
+    waypoint.target_pose = waypointPoseStamped;
+    waypoints.push_back(waypoint);
   }
   auto compSort = [](const move_base_msgs::MoveBaseGoal& lhs, const move_base_msgs::MoveBaseGoal& rhs)
   {
     return lhs.target_pose.header.stamp < rhs.target_pose.header.stamp;
   };
-  std::sort(goals.begin(), goals.end(), compSort);
-  std::ofstream waypointsFile(waypointsFilePath_, std::ios::out | std::ios::trunc);
+  std::sort(waypoints.begin(), waypoints.end(), compSort);
+
+  // Saving the waypoints to disk
+  std::ofstream waypointsFile(waypointsFilePath_, std::ios::out | std::ios::trunc | std::ios::binary);
   if (waypointsFile.is_open())
   {
-    YAML::Emitter out;
-    out << YAML::BeginSeq;
-    for (auto goal : goals)
-    {
-      std::stringstream ss;
-      ss << goal;
-      YAML::Node node = YAML::Load(ss.str());
-      out << node;
-    }
-    out << YAML::EndSeq;
-    waypointsFile << out.c_str();
+    uint32_t serial_size = ros::serialization::serializationLength(waypoints);
+    boost::shared_array<uint8_t> buffer(new uint8_t[serial_size]);
+    ros::serialization::OStream stream(buffer.get(), serial_size);
+    stream << waypoints;
+    waypointsFile.write(reinterpret_cast<char*>(buffer.get()), serial_size);
   }
   else
     ROS_ERROR_STREAM("Error opening file: " << waypointsFilePath_);
   waypointsFile.close();
+  ROS_INFO_STREAM(waypoints.size() << " Poses near landmarks have been stored.");
 
   ros::shutdown();
 }

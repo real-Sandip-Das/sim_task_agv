@@ -16,7 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   tf2_ros
 )
-find_package(yaml-cpp REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -24,7 +23,6 @@ find_package(yaml-cpp REQUIRED)
 catkin_package(
   INCLUDE_DIRS
     include
-    ${YAML_CPP_INCLUDE_DIRS}
   CATKIN_DEPENDS
     roscpp
     geometry_msgs
@@ -44,7 +42,6 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIRS}
 )
 
 ## Declare cpp executables
@@ -61,8 +58,6 @@ add_dependencies(${PROJECT_NAME}_saver
 
 target_link_libraries(${PROJECT_NAME}_saver
   ${catkin_LIBRARIES}
-  yaml-cpp
-  ${YAML_CPP_LIBRARIES}
 )
 
 # Waypoints loader and sender node
@@ -78,8 +73,6 @@ add_dependencies(${PROJECT_NAME}_loader_sender
 
 target_link_libraries(${PROJECT_NAME}_loader_sender
   ${catkin_LIBRARIES}
-  yaml-cpp
-  ${YAML_CPP_LIBRARIES}
 )
 
 #############
