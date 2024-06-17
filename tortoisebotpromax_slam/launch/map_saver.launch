@@ -5,7 +5,10 @@
 	<!-- roslaunch tortoisebotpromax_slam map_saver.launch map_name:=yourmapname -->
 
 	<arg name="map_name" default="custom_agv_task"/>
+	<arg name="free_thres" default="10" />
+	<arg name="occ_thres" default="70" />
 
-	<node pkg="map_server" type="map_saver" name="map_saver" args="-f $(find tortoisebotpromax_navigation)/maps/$(arg map_name)"/>
+	<node pkg="map_server" type="map_saver" name="map_saver" args="-f $(find tortoisebotpromax_navigation)/maps/$(arg map_name) --occ $(arg occ_thres) --free $(arg free_thres)" output="screen"/>
+	<include file="$(find waypoints_server)/launch/saver.launch" />
 
 </launch>
