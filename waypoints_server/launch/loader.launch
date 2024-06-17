@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="waypoints_file" default="$(find waypoints_server)/saved_waypoints/saved_example.dat" />
+    <arg name="move_base_action" default="/move_base" />
+
+    <node pkg="waypoints_server" name="waypoints_server_loader_sender" type="waypoints_server_loader_sender" output="screen">
+        <param name="waypoints_file" value="$(arg waypoints_file)" />
+        <param name="move_base_action" value="$(arg move_base_action)" />
+    </node>
+</launch>

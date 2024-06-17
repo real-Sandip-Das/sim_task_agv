@@ -9,9 +9,16 @@
  * 
  */
 
-#include <waypoints_server/WaypointsServerLoaderSender.h>
+#include <ros/ros.h>
+#include "waypoints_server/WaypointsServerLoaderSender.h"
 
-int main()
+int main(int argc, char** argv)
 {
-    return 0;
+  ros::init(argc, argv, "waypoints_server_loader_sender");
+  ros::NodeHandle nodeHandle("~");
+
+  waypoints_server::WaypointsServerLoaderSender waypointsServerLoaderSender(nodeHandle);
+
+  waypointsServerLoaderSender.sendWaypoints();
+  ros::shutdown();
 }
