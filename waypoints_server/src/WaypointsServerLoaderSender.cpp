@@ -87,6 +87,7 @@ void WaypointsServerLoaderSender::sendWaypoints()
                            actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>::SimpleActiveCallback(),
                            actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>::SimpleFeedbackCallback());
     actionClient_p_ -> waitForResult();
+    goalID_++;
   }
   ros::shutdown();
 }
@@ -94,7 +95,7 @@ void WaypointsServerLoaderSender::sendWaypoints()
 void WaypointsServerLoaderSender::doneCallback(const actionlib::SimpleClientGoalState& state,
                                                const boost::shared_ptr<const move_base_msgs::MoveBaseResult> &result)
 {
-  ROS_INFO_STREAM("Waypoint reached! Serial Number: " << goalID_++);
+  ROS_INFO_STREAM("Waypoint reached! Serial Number: " << goalID_);
 }
 
 } /* namespace waypoints_server */
