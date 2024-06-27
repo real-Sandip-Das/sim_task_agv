@@ -243,14 +243,12 @@ For the project's current state, this will suffice:
 rosbag record /tf /tf_static /scan /cmd_vel /camera/color/camera_info /camera/color/image_raw
 ```
 
-<!--
 In case the Bag file has been recorded using the former `rosbag record` command, this can be used to get a Bag file as if it's been recorded with the latter:
 
 ```bash
-rosbag filter src/SLAMbag2original.bag src/SLAMbag2.bag "(topic[:8] != '/camera') or (topic[:14] == '/camera/color')" #TODO: untested
+rosbag filter src/SLAMbag2original.bag src/SLAMbag2.bag "topic in ['/tf', '/tf_static', '/scan', '/cmd_vel', '/camera/color/camera_info', '/camera/color/image_raw']"
 ```
 
--->
 Compressing the bag file using **LZ4** compression:
 
 ```bash
