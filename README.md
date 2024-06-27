@@ -123,7 +123,7 @@ After launching the above setup,
 
 # Discussions related to the Solution
 
-Installing required packages for the task:
+## Installing required packages for the task
 
 ```bash
 cd ~/Workspaces/tortoisebotpromax_agv/
@@ -153,7 +153,7 @@ catkin config --install --cmake-args -G Ninja
 catkin clean && catkin build # also builds ros_aruco_opencv and aruco_opencv_to_cartographer_landmark
 ```
 
-Explanation for the SLAM launch file `tortoisebotpromax_slam/launch/custom_agv_task.launch`:
+## Explanation for the SLAM launch file `tortoisebotpromax_slam/launch/custom_agv_task.launch`
 
 ```xml
     <!-- Start Google Cartographer node with custom configuration file-->
@@ -209,8 +209,9 @@ Thus, I recommended installing the latest version of this package from source.
 
 This corresponds to the custom node that I wrote in C++ for translating and forwarding the ArUco detections from the previously discussed Nodelet to the `/landmark` topic for being used by Google Cartographer
 
-Recording the ROS Bag:
-launching:
+## Recording a ROS Bag for SLAM
+
+Launching:
 
 ```bash
 roslaunch tortoisebotpromax_gazebo tortoisebotpromax_playground.launch
@@ -242,21 +243,60 @@ For the project's current state, this will suffice:
 rosbag record /tf /tf_static /scan /cmd_vel /camera/color/camera_info /camera/color/image_raw
 ```
 
+<!--
 In case the Bag file has been recorded using the former `rosbag record` command, this can be used to get a Bag file as if it's been recorded with the latter:
 
 ```bash
 rosbag filter src/SLAMbag2original.bag src/SLAMbag2.bag "(topic[:8] != '/camera') or (topic[:14] == '/camera/color')" #TODO: untested
 ```
 
+-->
 Compressing the bag file using **LZ4** compression:
 
 ```bash
 rosbag compress --lz4 ./*.bag
 ```
 
-## How to run the solution
+## Explanation for the Navigation Launch file `custom_agv_task.launch`
 
-### SLAM
+```xml
+    <include file="$(find tortoisebotpromax_navigation)/launch/amcl.launch">
+        <arg name="scan_topic"     value="scan"/>
+        <arg name="base_frame"     value="base_link"/>
+        <arg name="initial_pose_x" value="0.0"/>
+        <arg name="initial_pose_y" value="0.0"/>
+        <arg name="initial_pose_a" value="0.0"/>
+    </include>
+```
+
+Uses AMCL(Advanced Monte Carlo Localization) to publish `odom` to `map` transform required for Navigation
+
+```xml
+    <include file="$(find tortoisebotpromax_navigation)/launch/tortoisebotpromax_sim_navigation.launch">
+        <arg name="map_file" value="custom_agv_task"/>
+        <arg name="move_forward_only" value="false"/>
+        <arg name="exploration" value="false"/>
+    </include>
+```
+
+Apart from Localization, this sets up the rest of the Navigation stack(`move_base` and `map_server`) which includes:
+
+- `map_server` for serving the Occupancy grid generated utilizing SLAM
+- A Local Planner(`dwa_local_planner/DWAPlannerROS` in this case) and a Global Planner(Dijkstra's Algorithm, internally) for the robot to plan paths to provided waypoints and execute them by sending commands to `cmd_vel`
+
+It also sets up the RViz visualization
+
+```xml
+    <include file="$(find waypoints_server)/launch/loader.launch" />
+```
+
+For reading and sending waypoints from disk to the Navigation stack
+
+### Explanation for (most of) the parameter adjustments
+
+# How to run the solution
+
+## SLAM
 
 Playing the ROS Bag:
 
@@ -276,7 +316,15 @@ Saving the Generated Map:
 roslaunch tortoisebotpromax_slam map_saver.launch
 ```
 
-### Navigation
+![SLAM Screenshot](SLAMScreenshot.png)
+
+- The spherical markers in the Visualization represents the detected positions of the markers in the map (since their detections were integrated during SLAM as landmark data)
+- The detected trajectory of the robot in the generated map is shown in Blue
+- The LiDAR Point cloud is also visualized here in Red
+
+The last launch file also runs custom nodes written by me in C++, that extracts the closest(Euclidean distance) poses to each ArUco marker in the trajectory and saves them to a file named `saved_example.dat` for being used as waypoints
+
+## Navigation
 
 It is required to start the simulation first:
 
@@ -289,3 +337,5 @@ Running this launch file will start running the navigation task:
 ```bash
 roslaunch tortoisebotpromax_navigation custom_agv_task.launch
 ```
+
+Basically driving the robots through the stored waypoints
