@@ -121,3 +121,171 @@ After launching the above setup,
 - As you might have realised by now, there aren't many video tutorials on ROS. So you have to learn by going through the documentation
 - Google WHATEVER error you face and go through every link and comment on stackoverflow 
 
+# Discussions related to the Solution
+
+Installing required packages for the task:
+
+```bash
+cd ~/Workspaces/tortoisebotpromax_agv/
+
+# Cloning ros_aruco_opencv and aruco_opencv_to_cartographer_landmark for installing from source
+git clone -b noetic https://github.com/fictionlab/ros_aruco_opencv src/ros_aruco_opencv
+git clone https://github.com/real-Sandip-Das/aruco_opencv_to_cartographer_landmark src/aruco_opencv_to_cartographer_landmark
+
+# Other dependencies for camera
+sudo apt-get install ros-noetic-realsense2-camera ros-noetic-cv-bridge ros-noetic-image-transport ros-noetic-opencv-apps
+
+# For building Google Cartographer
+sudo apt install lua5.3 liblua5.3-dev
+
+# Building Google Cartographer
+sudo apt-get update
+sudo apt-get install google-mock libgmock-dev
+sudo apt-get install -y python3-wstool python3-rosdep ninja-build stow
+wstool init src
+wstool merge -t src https://raw.githubusercontent.com/cartographer-project/cartographer_ros/master/cartographer_ros.rosinstall
+wstool update -t src
+src/cartographer/scripts/install_abseil.sh
+rosdep update
+rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
+rm -rf abseil-cpp
+catkin config --install --cmake-args -G Ninja
+catkin clean && catkin build # also builds ros_aruco_opencv and aruco_opencv_to_cartographer_landmark
+```
+
+Explanation for the SLAM launch file `tortoisebotpromax_slam/launch/custom_agv_task.launch`:
+
+```xml
+    <!-- Start Google Cartographer node with custom configuration file-->
+    <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node" args=" 
+        -configuration_directory $(find tortoisebotpromax_firmware)/config 
+        -configuration_basename lidar.lua" 
+          output="screen">
+    </node>
+```
+
+This part was taken from `server_bringup.launch`, since `cartographer_node` is one of the two required Nodes launched for Google Cartographer SLAM
+
+```xml
+    <node pkg="image_proc" type="image_proc" name="image_proc" ns="/camera/color" />
+```
+
+Running `image_proc` node to rectify image
+It is translated from the following equivalent `rosrun` command:
+
+```bash
+ROS_NAMESPACE=/camera/color rosrun image_proc image_proc
+```
+
+For Rectifying the Raw camera image and republishing it to another topic
+
+```xml
+    <!-- Run the nodelet manager -->
+    <node pkg="nodelet" type="nodelet" name="aruco_tracker_nodelet_manager" args="manager" output="screen"/>
+
+    <!-- Load the ArucoTracker nodelet -->
+    <node pkg="nodelet" type="nodelet" name="aruco_tracker" args="load aruco_opencv/ArucoTracker aruco_tracker_nodelet_manager" output="screen">
+        <param name="cam_base_topic" value="/camera/color/image_rect"/>
+        <param name="marker_size" value="0.4"/>
+        <param name="image_is_rectified" value="true"/>
+    </node>
+```
+
+For utilizing the package `aruco_opencv` written using OpenCV's C++ API, that is supposed to detect ArUco markers visible through the camera and estimate their poses.
+Equivalent bash command:
+
+```bash
+rosrun nodelet nodelet standalone aruco_opencv/ArucoTracker _cam_base_topic:=camera/color/image_rect _marker_size:=0.2 _image_is_rectified:=true
+```
+
+I found out about an existing bug in this package which was initially causing it to not work correctly, \
+so I made a [pull request](https://github.com/fictionlab/ros_aruco_opencv/pull/45) resolving the issue. \
+Thus, I recommended installing the latest version of this package from source.
+
+```xml
+    <!-- Convert pose estimations of ArUco markers to Landmarks for Google Cartographer -->
+    <include file="$(find aruco_opencv_to_cartographer_landmark)/launch/demo.launch"/>
+```
+
+This corresponds to the custom node that I wrote in C++ for translating and forwarding the ArUco detections from the previously discussed Nodelet to the `/landmark` topic for being used by Google Cartographer
+
+Recording the ROS Bag:
+launching:
+
+```bash
+roslaunch tortoisebotpromax_gazebo tortoisebotpromax_playground.launch
+```
+
+It is recommended to decrease the `real time update rate`, close the Gazebo window and continue with rviz visualizations
+The reason for the aforementioned being that simulating the Realsense RGBD Camera can be computationally heavy on certain machines, \
+resulting in decreased frequency of the `/camera` topic whereas, Google Cartographer SLAM requires `/camera` and `/scan` to be published \
+at a frequency not too different from each other (for SLAM involving landmarks)
+
+Teleoperating:
+
+```bash
+rosrun teleop_twist_keyboard teleop_twist_keyboard.py 
+```
+
+Recording:
+
+```bash
+rosbag record /tf /tf_static /scan /cmd_vel /camera/color/camera_info /camera/color/image_raw /camera/depth/camera_info /camera/depth/color/points /camera/depth/image_raw /camera/infra1/camera_info /camera/infra1/image_raw /camera/infra2/camera_info /camera/infra2/image_raw
+```
+
+(Now assume that the Bag file has been saved in/renamed to `src/SLAMbag2original.bag`)
+
+I've been recording this many topics because I'm currently experimenting with 3D Mapping utilizing the robot's Realsense RGBD camera
+For the project's current state, this will suffice:
+
+```bash
+rosbag record /tf /tf_static /scan /cmd_vel /camera/color/camera_info /camera/color/image_raw
+```
+
+In case the Bag file has been recorded using the former `rosbag record` command, this can be used to get a Bag file as if it's been recorded with the latter:
+
+```bash
+rosbag filter src/SLAMbag2original.bag src/SLAMbag2.bag "(topic[:8] != '/camera') or (topic[:14] == '/camera/color')" #TODO: untested
+```
+
+Compressing the bag file using **LZ4** compression:
+
+```bash
+rosbag compress --lz4 ./*.bag
+```
+
+## How to run the solution
+
+### SLAM
+
+Playing the ROS Bag:
+
+```bash
+rosbag play --clock --rate=0.7 src/SLAMbag2.bag
+```
+
+Starting SLAM:
+
+```bash
+roslaunch tortoisebotpromax_slam custom_agv_task.launch
+```
+
+Saving the Generated Map:
+
+```bash
+roslaunch tortoisebotpromax_slam map_saver.launch
+```
+
+### Navigation
+
+It is required to start the simulation first:
+
+```bash
+roslaunch tortoisebotpromax_gazebo tortoisebotpromax_playground.launch
+```
+
+Running this launch file will start running the navigation task:
+
+```bash
+roslaunch tortoisebotpromax_navigation custom_agv_task.launch
+```
