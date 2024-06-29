@@ -1,4 +1,4 @@
-image: /home/anonub/Workspaces/tortoisebotpromax_agv/src/sim_task_agv/tortoisebotpromax_navigation/maps/custom_agv_task.pgm
+image: ./custom_agv_task.pgm
 resolution: 0.010000
 origin: [-10.059285, -6.208067, 0.000000]
 negate: 0
